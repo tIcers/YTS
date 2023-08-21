@@ -1,10 +1,14 @@
 import spotipy
-import configparser
-from spotipy.oauth2 import SpotifyOAuth
+from spotipy.oauth2 import SpotifyClientCredentials
 
-config = configparser.ConfigParser()
-config.read("config.ini")
-spotify_client_id = config.get("SPOTIFY", "CLIENT_ID")
-spotify_client_secret = config.get("SPOTIFY", "CLIENT_SECRET")
+birdy_uri = 'spotify:artist:2WX2uTcsvV5OnS0inACecP'
+spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
 
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=spotify_client_id, client_secret=spotify_client_secret))
+results = spotify.artist_albums(birdy_uri, album_type='album')
+albums = results['items']
+while results['next']:
+    results = spotify.next(results)
+    albums.extend(results['items'])
+
+for album in albums:
+    print(album['name'])
