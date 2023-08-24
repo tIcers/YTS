@@ -1,14 +1,25 @@
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
+from movie.video.io.VideoFileClip import VideoFileClip
 
-birdy_uri = 'spotify:artist:2WX2uTcsvV5OnS0inACecP'
-spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
 
-results = spotify.artist_albums(birdy_uri, album_type='album')
-albums = results['items']
-while results['next']:
-    results = spotify.next(results)
-    albums.extend(results['items'])
+def split_video(video_path, timestamps):
+    video = VideoFileClip(video_path)
+    clips = []
 
-for album in albums:
-    print(album['name'])
+    for start_time, end_time in zip(timestamps, timestamps[1:] + [video.duration]):
+        song_clip = video.subclip(start_time, end_time)
+        clips.append(song_clip)
+
+    return clips
+
+def search_and_add_to_playlist(song_info):
+    try:
+        spotify = spotify.Spotipy(client_credentials_manager=SpotifyClientCredentials())
+
+        for start_time in song_info['timestamps']:
+            song_clip = split_video(video_path, [start_time])[0]
+            song_title = f"{song_info['title']} - {start_time}"
+            print('Added to playlist:', song_title)
+    except Exception as e:
+        print('Error adding to playlist:', e)
