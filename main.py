@@ -27,3 +27,17 @@ def parse_video_description(description):
     matches = re.findall(pattern, description, re.MULTILINE)
     return matches
 
+
+def create_spotify_playlist(playlist_name, tracks):
+    user_id = sp.current_user()['id']
+    playlist = sp.user_playlist_create(user=user_id, name=playlist_name, public=True)
+    playlist_id = playlist['id']
+
+    for track in tracks:
+        song_title, artist_name = track[1], track[2]
+        query = f'track:{song_title} artist:{artist_name}'
+        results = sp.search(q=query, type='track')
+
+        if results['tracks']['items']:
+            track_uri = results['tracks']['items'][0]['uri']
+            sp.user_playlist_add_tracks(user=user_id, playlist_id=playlist_id, tracks=[track_uri])
