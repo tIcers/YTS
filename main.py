@@ -2,8 +2,11 @@ import youtube_dl
 import spotipy
 import re
 from spotipy.oauth2 import SpotifyClientCredentials
+from config import SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET
 
-sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(scope='playlist-modify-public'))
+
+sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=SPOTIPY_CLIENT_ID,
+                                                                         client_secret=SPOTIPY_CLIENT_SECRET))
 
 
 def get_video_description(youtube_url):
@@ -12,6 +15,7 @@ def get_video_description(youtube_url):
         'quiet': True,
         'extract_flat': True,
         'force_generic_extractor': True,
+        'no_check_certificate': True,
     }
 
     with youtube_dl.YoutubeDL(ydl_ops) as ydl:
@@ -41,3 +45,18 @@ def create_spotify_playlist(playlist_name, tracks):
         if results['tracks']['items']:
             track_uri = results['tracks']['items'][0]['uri']
             sp.user_playlist_add_tracks(user=user_id, playlist_id=playlist_id, tracks=[track_uri])
+
+
+def main():
+
+    youtube_url = input("Enter the Youtube video URL: ")
+    description = get_video_description(youtube_url)
+
+    if description:
+        parsed_tracks = parse_video_description(description)
+        create_spotify_playlist('New Playlist', parsed_tracks)
+    else:
+        print("Video description was not found")
+
+if __name__ == "__main__":
+    main()
