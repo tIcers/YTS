@@ -1,62 +1,69 @@
-import youtube_dl
+import yt_dlp as youtube_dl
 import spotipy
 import re
-from spotipy.oauth2 import SpotifyClientCredentials
-from config import SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from spotipy.oauth2 import SpotifyOAuth
+from config import SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URL,YOUTUBE_API_KEY
+
+sp_oauth = SpotifyOAuth(
+    SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URL,
+    scope='playlist-modify-public')
+
+youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
 
-sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=SPOTIPY_CLIENT_ID,
-                                                                         client_secret=SPOTIPY_CLIENT_SECRET))
+def get_youtube_playlist_tracks(playlist_id):
+    try:
+        playlist_response = youtube.playlistItems().list(
+            part='snippet',
+            playlistId=playlist_id,
+            maxResults=200
+        ).execute()
+
+        tracks = []
+        for item in playlist_response['items']:
+            track_title = item['snippet']['title']
+            tracks.append(track_title)
+
+        return tracks
+
+    except HttpError as e:
+        print("An error occured:", e)
 
 
-def get_video_description(youtube_url):
-
-    ydl_ops = {
-        'quiet': True,
-        'extract_flat': True,
-        'force_generic_extractor': True,
-        'no_check_certificate': True,
-    }
-
-    with youtube_dl.YoutubeDL(ydl_ops) as ydl:
-        result = ydl.extract_info(youtube_url, download=False)
-        if 'description' in result:
-            return result['description']
-        else:
-            return None
-
-
-def parse_video_description(description):
-    pattern = r'(\d{1,2}:\d{2}:\d{2} | \d{1,2}:\d{2})\s*(.*?)\s*-\s*(.*?)$'
-    matches = re.findall(pattern, description, re.MULTILINE)
-    return matches
-
-
-def create_spotify_playlist(playlist_name, tracks):
+def search_and_add_tracks_to_spotify_playlist(tracks, playlist_name):
+    sp = spotipy.Spotify(auth_manager=sp_oauth)
     user_id = sp.current_user()['id']
+
     playlist = sp.user_playlist_create(user=user_id, name=playlist_name, public=True)
     playlist_id = playlist['id']
 
-    for track in tracks:
-        song_title, artist_name = track[1], track[2]
-        query = f'track:{song_title} artist:{artist_name}'
+    for track_title in tracks:
+        query = f'track:{track_title}'
         results = sp.search(q=query, type='track')
 
         if results['tracks']['items']:
             track_uri = results['tracks']['items'][0]['uri']
             sp.user_playlist_add_tracks(user=user_id, playlist_id=playlist_id, tracks=[track_uri])
+            print("Added:", track_title)
+        else:
+            print("Track not found:", track_title)
+
 
 
 def main():
 
-    youtube_url = input("Enter the Youtube video URL: ")
-    description = get_video_description(youtube_url)
+    youtube_playlist_id = input("Enter the YouTube playlist ID: ")  # You need to get this from the YouTube playlist URL
+    playlist_name = input("Enter the Spotify playlist name: ")
 
-    if description:
-        parsed_tracks = parse_video_description(description)
-        create_spotify_playlist('New Playlist', parsed_tracks)
+    tracks = get_youtube_playlist_tracks(youtube_playlist_id)
+
+    if tracks:
+        search_and_add_tracks_to_spotify_playlist(tracks, playlist_name)
     else:
-        print("Video description was not found")
+        print("No tracks found in the YouTube playlist.")
+
 
 if __name__ == "__main__":
     main()
