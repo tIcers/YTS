@@ -14,21 +14,29 @@ youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
 def get_youtube_playlist_tracks(playlist_id):
     try:
-        playlist_response = youtube.playlistItems().list(
-            part='snippet',
-            playlistId=playlist_id,
-            maxResults=50
-        ).execute()
-
         tracks = []
-        for item in playlist_response['items']:
-            track_title = item['snippet']['title']
-            tracks.append(track_title)
+
+        next_page_token = None
+        while True:
+            playlist_response = youtube.playlistItems().list(
+                part='snippet',
+                playlistId=playlist_id,
+                maxResults=50,
+                pageToken=next_page_token
+            ).execute()
+
+            for item in playlist_response['items']:
+                track_title = item['snippet']['title']
+                tracks.append(track_title)
+
+            next_page_token = playlist_response.get('nextPageToken')
+            if not next_page_token:
+                break
 
         return tracks
 
     except HttpError as e:
-        print("An error occured:", e)
+        print("An error occurred:", e)
 
 
 def preprocess_track_title(track_title):
