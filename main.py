@@ -45,6 +45,18 @@ def preprocess_track_title(track_title):
     return preprocessed_title.strip()
 
 
+def extract_artist_and_title(track_title):
+    parts = track_title.split(" - ")
+    if len(parts) == 2:
+        artist_name = parts[0]
+        title = parts[1]
+    else:
+        artist_name = ""
+        title = track_title
+    preprocessed_title = preprocess_track_title(title)
+    return artist_name, preprocessed_title
+
+
 def search_and_add_tracks_to_spotify_playlist(tracks, playlist_name):
     sp = spotipy.Spotify(auth_manager=sp_oauth)
     user_id = sp.current_user()['id']
@@ -55,19 +67,20 @@ def search_and_add_tracks_to_spotify_playlist(tracks, playlist_name):
     added_count = 0
 
     for track_title in tracks:
-        preprocessed_title = preprocess_track_title(track_title)
-        query = f'track:{preprocessed_title}'
+        artist_name, preprocessed_title = extract_artist_and_title(track_title)
+        query = f'artist:{artist_name} track:{preprocessed_title}'
         results = sp.search(q=query, type='track')
 
         if results['tracks']['items']:
             track_uri = results['tracks']['items'][0]['uri']
             sp.user_playlist_add_tracks(user=user_id, playlist_id=playlist_id, tracks=[track_uri])
             print("Added:", track_title)
-            added_count +=1 
+            added_count += 1
         else:
             print("Track not found:", track_title)
 
     print(f"The number of total songs are added:{added_count}")
+
 
 def main():
 
