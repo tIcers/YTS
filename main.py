@@ -1,9 +1,15 @@
+import os
 import re
 import spotipy
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from spotipy.oauth2 import SpotifyOAuth
-from config import SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URL, YOUTUBE_API_KEY
+
+
+SPOTIPY_CLIENT_ID = os.environ.get('SPOTIPY_CLIENT_ID')
+SPOTIPY_CLIENT_SECRET = os.environ.get('SPOTIPY_CLIENT_SECRET')
+SPOTIPY_REDIRECT_URL = os.environ.get('SPOTIPY_REDIRECT_URL')
+YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY')
 
 sp_oauth = SpotifyOAuth(
     SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URL,
@@ -13,6 +19,15 @@ youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
 
 def get_youtube_playlist_tracks(playlist_id):
+    """
+    Fetches the track titles from a YouTube playlist.
+
+    Args:
+        playlist_id (str): The ID of the YouTube playlist.
+
+    Returns:
+        list: A list of track titles from the playlist.
+    """
     try:
         tracks = []
 
@@ -40,12 +55,30 @@ def get_youtube_playlist_tracks(playlist_id):
 
 
 def preprocess_track_title(track_title):
+    """
+    Preprocesses a track title by removing common terms.
+
+    Args:
+        track_title (str): The original track title.
+
+    Returns:
+        str: The preprocessed track title.
+    """
     pattern = r'\s*\([^)]*\)|\s*\[[^\]]*\]|\bMV\b|\bM/V\b|\bOfficial Music Video\b|\bOffical\b|\bmv\b'
     preprocessed_title = re.sub(pattern, "", track_title, flags=re.IGNORECASE)
     return preprocessed_title.strip()
 
 
 def extract_artist_and_title(track_title):
+    """
+    Extracts artist name and preprocessed title from a track title.
+
+    Args:
+        track_title (str): The track title containing artist and title.
+
+    Returns:
+        tuple: A tuple containing artist name and preprocessed title.
+    """
     parts = track_title.split(" - ")
     if len(parts) == 2:
         artist_name = parts[0]
@@ -58,6 +91,16 @@ def extract_artist_and_title(track_title):
 
 
 def search_and_add_tracks_to_spotify_playlist(tracks, playlist_name):
+    """
+    Searches for tracks on Spotify and adds them to a playlist.
+
+    Args:
+        tracks (list): List of track titles to search for.
+        playlist_name (str): Name of the Spotify playlist.
+
+    Returns:
+        None
+    """
     sp = spotipy.Spotify(auth_manager=sp_oauth)
     user_id = sp.current_user()['id']
 
@@ -83,8 +126,13 @@ def search_and_add_tracks_to_spotify_playlist(tracks, playlist_name):
 
 
 def main():
+    """
+    Main function to interact with the user and perform the process.
 
-    youtube_playlist_id = input("Enter the YouTube playlist ID: ")  # You need to get this from the YouTube playlist URL
+    Returns:
+        None
+    """
+    youtube_playlist_id = input("Enter the YouTube playlist ID: ")
     playlist_name = input("Enter the Spotify playlist name: ")
 
     tracks = get_youtube_playlist_tracks(youtube_playlist_id)
