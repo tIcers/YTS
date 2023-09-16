@@ -29,8 +29,7 @@ Google API client library (google-api-python-client) for the YouTube Data API
 
 Clone this repository to your local machine.
 
-git clone https://github.com/tIcers/YTS.git
-cd YTS
+git clone https://github.com/tIcers/YTS.git </br>   cd YTS
 
 
 -Install the required dependencies using pip.
@@ -40,7 +39,16 @@ pip install spotipy google-api-python-client
 
 -Usage
 
-Set up your Google API credentials and Spotify API credentials.   Add them to your environment variables.
+Set up your Google API credentials and Spotify API credentials.    Add them to your environment variables.
+ 
+-Configuration  
+Sensitive information like API credentials and tokens are better managed using environment variables. You can set up environment variables in your terminal or create a .env file in the project directory with the following format:
+
+Export SPOTIPY_CLIENT_ID=your_spotify_client_id  
+Export SPOTIPY_CLIENT_SECRET=your_spotify_client_secret  
+Export SPOTIPY_REDIRECT_URL=your_spotify_redirect_url  
+Export YOUTUBE_API_KEY=your_youtube_api_key 
+
 
 -Run the script.
 
@@ -51,11 +59,4 @@ Follow the prompts to input the YouTube playlist ID and the name of the new Spot
 
 The script will extract track titles from the YouTube playlist, preprocess them, and search for the tracks on Spotify.   It will then create a new public Spotify playlist and add the found tracks to it.
 
--Configuration  
-Sensitive information like API credentials and tokens are better managed using environment variables. You can set up environment variables in your terminal or create a .env file in the project directory with the following format:
-
-
-SPOTIPY_CLIENT_ID=your_spotify_client_id  
-SPOTIPY_CLIENT_SECRET=your_spotify_client_secret  
-SPOTIPY_REDIRECT_URL=your_spotify_redirect_url  
-YOUTUBE_API_KEY=your_youtube_api_key  
+ 
